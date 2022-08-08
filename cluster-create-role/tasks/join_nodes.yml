@@ -43,10 +43,26 @@
     msg: "standard join command generated: {{hostvars['kube_master'].standard_join_command}}"
 
 
-- name: join other controlplane nodes
-  command: "{{hostvars['kube_master'].standard_join_command}} --control-plane --certificate-key {{hostvars['kube_master'].certificate_key}}"
-  when:  "inventory_hostname in groups['masters'] and not primary_controlplane is defined"
 
-- name: join worker nodes
-  command: "{{hostvars['kube_master'].standard_join_command}}"
-  when:  inventory_hostname in groups['workers']
+- name: Check if /var/lib/kubelet directory exist
+  stat:
+    path: /var/lib/kubelet
+  register: kubelet_dir
+
+- name: Check if /var/lib/kubelet directory is empty
+  find:
+    paths: /var/lib/kubelet
+    file_type: directory
+  register: kubelet_dir_files
+  when:
+    - kubelet_dir.stat.exists == true
+
+- block:
+  - name: join other controlplane nodes
+    command: "{{hostvars['kube_master'].standard_join_command}} --control-plane --certificate-key {{hostvars['kube_master'].certificate_key}}"
+    when:  "inventory_hostname in groups['masters'] and not primary_controlplane is defined"
+  
+  - name: join worker nodes
+    command: "{{hostvars['kube_master'].standard_join_command}}"
+    when:  inventory_hostname in groups['workers']
+  when: kubelet_dir.stat.exists == false or kubelet_dir_files.examined == 0
