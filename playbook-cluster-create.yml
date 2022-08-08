@@ -1,0 +1,9 @@
+- name: create kubernetes cluster
+  become: yes
+  vars_files:
+    - /home/ansible/playbooks/vars_file.yml    # da stabilire
+  hosts: "{{cluster_name}}"
+
+  tasks:
+    - ansible.builtin.import_role:
+        name: cluster-create-role

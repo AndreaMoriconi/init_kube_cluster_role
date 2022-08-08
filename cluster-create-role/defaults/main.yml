@@ -1,0 +1,6 @@
+#variable to set befoure lauch
+
+is_first_installation: false  #if is the first installation of the cluster(kubeadm init required) set to true, by default is false for joining new nodes
+cluster_name: my-cluster   
+vip: 10.0.2.10  #vip for multiple contrlolplane nodes is required (loadbalancing is not managed by this role)
+vip_port: 8443

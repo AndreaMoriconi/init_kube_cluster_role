@@ -1,0 +1,4 @@
+- name: install CALICO
+  command:  kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+
+#it is possible to customize the pod cidr if desired download manifest and modify in before apply

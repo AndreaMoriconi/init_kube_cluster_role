@@ -1,0 +1,29 @@
+#- name: set fact to  establish the primary controlplane
+#  set_fact:
+#    primary_controlplane: "{{ hostvars[groups['masters'][0]]['kubernetes_ip_address'] }}"
+
+- name: set fact to  establish the primary controlplane
+  set_fact: 
+    primary_controlplane: true
+  when: inventory_hostname in groups['masters'] and  inventory_hostname in groups['{{cluster_name}}'][0]
+
+
+- name: debug 
+  debug:
+    msg: "{{primary_controlplane}} i am primary controlplane"
+  when: "primary_controlplane is defined"
+
+
+
+- name: prefligth #just for test env TO REMOVE
+  include_tasks:
+    file: prepare_host.yml
+
+- name: initialize cluster on prymary controlplane
+  include_tasks:
+    file: init_cluster.yml
+  when: "primary_controlplane is defined and {{is_first_installation}}"
+
+- name: join other master and worker nodes
+  include_tasks:
+    file: join_nodes.yml

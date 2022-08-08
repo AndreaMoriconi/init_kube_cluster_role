@@ -1,0 +1,36 @@
+- name: setup repo
+  shell: |
+    cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
+    [kubernetes]
+    name=Kubernetes
+    baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-\$basearch
+    enabled=1
+    gpgcheck=1
+    gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+    exclude=kubelet kubeadm kubectl
+    EOF
+- name: Set SELinux in permissive mod1
+  command: "setenforce 0"
+
+- name: Set SELinux in permissive mod2
+  ansible.builtin.lineinfile:
+    path: /etc/selinux/config
+    regexp: '^SELINUX='
+    line: SELINUX=permissive
+
+- name: Installing kubeadm, kubelet and kubectl
+  yum:
+    name: 
+      - kubelet
+      - kubeadm
+      - kubectl
+    state: present
+    disable_excludes: kubernetes
+    update_cache: yes
+  
+- name: Start and enable kubelet
+  systemd:
+    name: kubelet
+    enabled: yes
+    state: started
+

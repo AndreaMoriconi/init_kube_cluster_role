@@ -1,0 +1,52 @@
+- name: debug
+  debug:
+    msg: "we will join the nodes"
+
+- name: "wait for kubeapi server"
+  uri:
+    url: "https://{{ vip }}:{{ vip_port }}/healthz"
+    status_code: 200
+    validate_certs: no
+  register: result
+  until: result.status == 200
+  retries: 90
+  delay: 15
+
+
+- block:
+  - name: generate and save certificate key to decrypt controlplane certs
+    command: kubeadm init phase upload-certs --upload-certs
+    register: certificate_key_var
+    when: "primary_controlplane is defined"
+
+  - name: set certificate_key 
+    set_fact:
+      certificate_key: "{{ certificate_key_var.stdout_lines[2] }}"
+  
+  - name: debug
+    debug:
+      msg: "created cert key {{certificate_key}}"
+  
+  - name: get join command with token and discovery-token-ca-cert-hash 
+    command: kubeadm token create --print-join-command
+    register: standard_join_command_var
+    when: "primary_controlplane is defined"
+  
+  - name: set standard join command
+    set_fact:
+      standard_join_command: "{{ standard_join_command_var.stdout }}"
+
+  when: "primary_controlplane is defined"
+
+- name: debug
+  debug:
+    msg: "standard join command generated: {{hostvars['kube_master'].standard_join_command}}"
+
+
+- name: join other controlplane nodes
+  command: "{{hostvars['kube_master'].standard_join_command}} --control-plane --certificate-key {{hostvars['kube_master'].certificate_key}}"
+  when:  "inventory_hostname in groups['masters'] and not primary_controlplane is defined"
+
+- name: join worker nodes
+  command: "{{hostvars['kube_master'].standard_join_command}}"
+  when:  inventory_hostname in groups['workers']
