@@ -1,12 +1,13 @@
-#- name: set fact to  establish the primary controlplane
-#  set_fact:
-#    primary_controlplane: "{{ hostvars[groups['masters'][0]]['kubernetes_ip_address'] }}"
+
 
 - name: set fact to  establish the primary controlplane
   set_fact: 
     primary_controlplane: true
   when: inventory_hostname in groups['masters'] and  inventory_hostname in groups['{{cluster_name}}'][0]
 
+# il limite di questo task è che necesita di un inventory compilato con i seguenti criteri:
+#  - sotto il gruppo CLUSTER i master vannno messi per primi
+#  - i nuovi host vanno aggiunti sotto e non bisogna camiare l'ordine degli host
 
 - name: debug 
   debug:
@@ -14,10 +15,9 @@
   when: "primary_controlplane is defined"
 
 
-
-- name: prefligth #just for test env TO REMOVE
-  include_tasks:
-    file: prepare_host.yml
+#- name: prefligth #just for test env TO REMOVE
+#  include_tasks:
+#    file: prepare_host.yml
 
 - name: initialize cluster on prymary controlplane
   include_tasks:

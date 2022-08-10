@@ -2,9 +2,6 @@
   debug:
     msg: "we will initialize the cluster"
 
-- name: debug
-  debug:
-    msg: "ip of primary contolplane: {{ hostvars[groups['masters'][0]]['ansible_default_ipv4']['address']}}"
 
 - name: initilaize cluster
   command: kubeadm init --control-plane-endpoint {{vip}}:{{vip_port}} --upload-certs
